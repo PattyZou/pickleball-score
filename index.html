@@ -24,8 +24,15 @@
       margin: 0;
       padding: 0;
       height: 100vh;
-      overflow: hidden;
+      width: 100vw;
+      overflow: hidden; /* Prevent body scroll */
       -webkit-tap-highlight-color: transparent;
+    }
+    #root {
+      height: 100%;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
     }
     button {
       touch-action: manipulation;
@@ -47,7 +54,7 @@
 </script>
 </head>
 <body>
-  <div id="root" class="h-full"></div>
+  <div id="root"></div>
 
   <!-- Main Application Logic -->
   <script type="text/babel">
@@ -140,6 +147,7 @@
     // --- Components ---
 
     const Button = ({ children, variant = 'neutral', fullHeight = false, className = '', disabled, ...props }) => {
+      // Adjusted padding for mobile
       const baseStyle = "font-bold rounded-2xl transition-all active:scale-95 disabled:opacity-30 disabled:active:scale-100 shadow-lg flex items-center justify-center";
       const variants = {
         primary: "bg-emerald-500 hover:bg-emerald-400 text-white shadow-emerald-900/50",
@@ -148,7 +156,7 @@
         ghost: "bg-transparent hover:bg-white/10 text-slate-300 shadow-none",
       };
       return (
-        <button className={`${baseStyle} ${variants[variant]} ${fullHeight ? 'h-full' : 'py-4 px-6'} ${className}`} disabled={disabled} {...props}>
+        <button className={`${baseStyle} ${variants[variant]} ${fullHeight ? 'h-full' : 'py-3 sm:py-4 px-4 sm:px-6'} ${className}`} disabled={disabled} {...props}>
           {children}
         </button>
       );
@@ -177,13 +185,13 @@
       };
 
       return (
-        <div className="flex items-center gap-3 bg-slate-800 rounded-full px-4 py-2 border border-slate-700">
-          <div className="font-mono text-xl text-emerald-400 w-16 text-center">{formatTime(seconds)}</div>
+        <div className="flex items-center gap-2 sm:gap-3 bg-slate-800 rounded-full px-3 py-1.5 sm:px-4 sm:py-2 border border-slate-700">
+          <div className="font-mono text-lg sm:text-xl text-emerald-400 w-12 sm:w-16 text-center">{formatTime(seconds)}</div>
           <button onClick={onToggle} className="p-1 hover:text-emerald-400 transition-colors">
-            {isRunning ? <Icons.Pause size={18} /> : <Icons.Play size={18} />}
+            {isRunning ? <Icons.Pause size={16} className="sm:w-5 sm:h-5"/> : <Icons.Play size={16} className="sm:w-5 sm:h-5"/>}
           </button>
           <button onClick={handleReset} className="p-1 hover:text-rose-400 transition-colors">
-            <Icons.RefreshCw size={18} />
+            <Icons.RefreshCw size={16} className="sm:w-5 sm:h-5"/>
           </button>
         </div>
       );
@@ -195,30 +203,30 @@
           onClick={onClick}
           disabled={disabled}
           className={`
-            relative flex flex-col items-center justify-center w-full h-full rounded-3xl p-4 transition-all duration-300
+            relative flex flex-col items-center justify-center w-full h-full rounded-2xl sm:rounded-3xl p-2 sm:p-4 transition-all duration-300
             ${isWinner ? 'bg-amber-500 text-slate-900 border-4 border-yellow-300' : ''}
-            ${!isWinner && isServing ? 'bg-slate-700 border-4 border-emerald-500 shadow-lg shadow-emerald-900/30' : ''}
-            ${!isWinner && !isServing ? 'bg-slate-800 border-2 border-slate-700 opacity-80' : ''}
+            ${!isWinner && isServing ? 'bg-slate-700 border-2 sm:border-4 border-emerald-500 shadow-lg shadow-emerald-900/30' : ''}
+            ${!isWinner && !isServing ? 'bg-slate-800 border border-slate-700 opacity-80' : ''}
           `}
         >
           {isServing && !isWinner && (
-            <div className="absolute top-4 right-4 bg-emerald-500 text-slate-900 font-bold px-3 py-1 rounded-full text-xs sm:text-sm shadow-md animate-pulse">
+            <div className="absolute top-2 right-2 sm:top-4 sm:right-4 bg-emerald-500 text-slate-900 font-bold px-2 py-0.5 sm:px-3 sm:py-1 rounded-full text-[10px] sm:text-sm shadow-md animate-pulse whitespace-nowrap">
               發球 #{serverNumber}
             </div>
           )}
-          <div className="text-slate-400 text-sm sm:text-lg font-medium tracking-wide uppercase mb-2">
+          <div className="text-slate-400 text-xs sm:text-lg font-medium tracking-wide uppercase mb-0 sm:mb-2">
             {teamName}
           </div>
-          <div className={`font-mono font-bold leading-none ${isWinner ? 'text-slate-900' : 'text-white'} text-[6rem] sm:text-[8rem] md:text-[10rem]`}>
+          <div className={`font-mono font-bold leading-none ${isWinner ? 'text-slate-900' : 'text-white'} text-7xl sm:text-8xl md:text-9xl lg:text-[10rem]`}>
             {score}
           </div>
           {!disabled && !isWinner && (
-            <div className="mt-4 px-6 py-2 rounded-full bg-white/10 text-sm font-semibold backdrop-blur-sm">
+            <div className="mt-2 sm:mt-4 px-3 py-1 sm:px-6 sm:py-2 rounded-full bg-white/10 text-xs sm:text-sm font-semibold backdrop-blur-sm">
               {isServing ? "+ 得分" : "等待發球"}
             </div>
           )}
           {isWinner && (
-             <div className="absolute bottom-8 px-6 py-2 rounded-full bg-black/20 text-xl font-bold backdrop-blur-sm">
+             <div className="absolute bottom-4 sm:bottom-8 px-4 py-1 sm:px-6 sm:py-2 rounded-full bg-black/20 text-lg sm:text-xl font-bold backdrop-blur-sm">
               獲勝 🏆
             </div>
           )}
@@ -230,15 +238,15 @@
       if (!isOpen) return null;
       return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-slate-800 w-full max-w-sm rounded-3xl border border-slate-700 shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between p-6 border-b border-slate-700">
+          <div className="bg-slate-800 w-full max-w-sm rounded-3xl border border-slate-700 shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-700">
               <h2 className="text-xl font-bold flex items-center gap-2">
                 <Icons.Trophy className="text-amber-400" size={24} />
                 比賽設定
               </h2>
               <button onClick={onClose} className="p-2 hover:bg-slate-700 rounded-full transition-colors"><Icons.X size={20} /></button>
             </div>
-            <div className="p-6 space-y-6">
+            <div className="p-4 sm:p-6 space-y-6">
               <div>
                 <label className="block text-slate-400 text-sm mb-3 font-medium flex items-center gap-2">
                   <Icons.Users size={16} /> 隊伍名稱
@@ -289,7 +297,7 @@
       return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-slate-800 w-full max-w-sm h-[80vh] rounded-3xl border border-slate-700 shadow-2xl overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between p-6 border-b border-slate-700 flex-shrink-0">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-700 flex-shrink-0">
               <h2 className="text-xl font-bold flex items-center gap-2"><Icons.History className="text-blue-400" size={24} /> 歷史紀錄</h2>
               <div className="flex gap-2">
                 {records.length > 0 && (
@@ -465,18 +473,18 @@
 
       return (
         <div className="flex flex-col h-full max-w-md mx-auto bg-slate-900 shadow-2xl relative">
-          <header className="flex items-center justify-between p-4 bg-slate-900/80 backdrop-blur-md z-10 gap-2">
-            <button onClick={() => setIsSettingsOpen(true)} className="p-2 text-slate-400 hover:text-white transition-colors"><Icons.Settings size={24} /></button>
-            <button onClick={() => setIsHistoryOpen(true)} className="p-2 text-slate-400 hover:text-white transition-colors"><Icons.History size={24} /></button>
+          <header className="flex items-center justify-between p-2 sm:p-4 bg-slate-900/80 backdrop-blur-md z-10 gap-2 shrink-0">
+            <button onClick={() => setIsSettingsOpen(true)} className="p-2 text-slate-400 hover:text-white transition-colors"><Icons.Settings size={20} className="sm:w-6 sm:h-6" /></button>
+            <button onClick={() => setIsHistoryOpen(true)} className="p-2 text-slate-400 hover:text-white transition-colors"><Icons.History size={20} className="sm:w-6 sm:h-6" /></button>
             <div className="flex-1 flex justify-center">
               <Timer isRunning={timerRunning} onToggle={() => setTimerRunning(!timerRunning)} onReset={() => setTimerRunning(false)} />
             </div>
-            <button onClick={handleUndo} disabled={gameState.history.length === 0} className="p-2 text-slate-400 hover:text-white disabled:opacity-30 transition-colors"><Icons.Undo2 size={24} /></button>
+            <button onClick={handleUndo} disabled={gameState.history.length === 0} className="p-2 text-slate-400 hover:text-white disabled:opacity-30 transition-colors"><Icons.Undo2 size={20} className="sm:w-6 sm:h-6" /></button>
           </header>
 
-          <main className="flex-1 flex flex-col p-4 gap-4 overflow-hidden relative">
+          <main className="flex-1 flex flex-col p-2 gap-2 overflow-hidden relative min-h-0">
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
-              <div className="bg-slate-950/90 text-white font-mono font-bold text-xl px-4 py-1 rounded-full border border-slate-700 shadow-2xl backdrop-blur-md whitespace-nowrap">
+              <div className="bg-slate-950/90 text-white font-mono font-bold text-lg sm:text-xl px-3 py-1 sm:px-4 rounded-full border border-slate-700 shadow-2xl backdrop-blur-md whitespace-nowrap">
                 喊分: {scoreString}
               </div>
             </div>
@@ -488,17 +496,17 @@
             </div>
           </main>
 
-          <footer className="p-4 bg-slate-900 safe-area-bottom pb-8">
+          <footer className="p-3 sm:p-4 bg-slate-900 safe-area-bottom shrink-0">
             {gameState.gameStatus === 'idle' ? (
-              <Button variant="primary" onClick={startGame} className="w-full py-6 text-xl uppercase tracking-widest">開始比賽</Button>
+              <Button variant="primary" onClick={startGame} className="w-full text-lg sm:text-xl uppercase tracking-widest">開始比賽</Button>
             ) : gameState.winner ? (
               <div className="grid grid-cols-1">
-                 <Button variant="neutral" onClick={handleNewMatch} className="w-full py-6 text-xl">新比賽 (New Match)</Button>
+                 <Button variant="neutral" onClick={handleNewMatch} className="w-full text-lg sm:text-xl">新比賽 (New Match)</Button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-3">
-                 <Button variant="danger" onClick={handleFault} className="py-6 text-xl uppercase tracking-wider">發球失誤 / 換邊</Button>
-                <div className="text-center text-xs text-slate-500 mt-2">點擊發球方比分以增加分數。失誤請點擊下方按鈕。</div>
+              <div className="grid grid-cols-1 gap-2">
+                 <Button variant="danger" onClick={handleFault} className="text-lg sm:text-xl uppercase tracking-wider">發球失誤 / 換邊</Button>
+                <div className="text-center text-[10px] sm:text-xs text-slate-500 mt-1">點擊發球方比分以增加分數。失誤請點擊下方按鈕。</div>
               </div>
             )}
           </footer>
