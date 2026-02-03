@@ -1,33 +1,523 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
-    <title>Pickleball Pro Tracker</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-      /* Prevent double-tap zoom on mobile */
-      button {
-        touch-action: manipulation;
-      }
-      body {
-        -webkit-tap-highlight-color: transparent;
-      }
-    </style>
-  <script type="importmap">
+<html lang="zh-TW">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+  <title>匹克球專業計分板</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- React & ReactDOM (UMD for standalone usage) -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  
+  <!-- Babel Standalone (enables JSX in browser) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Critical CSS to prevent FOUC (Flash of Unstyled Content) and ensure dark theme -->
+  <style>
+    body {
+      background-color: #0f172a; /* slate-900 */
+      color: #ffffff;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      overflow: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button {
+      touch-action: manipulation;
+    }
+    /* Safe area for mobile devices with notches */
+    .safe-area-bottom {
+      padding-bottom: env(safe-area-inset-bottom, 20px);
+    }
+  </style>
+<script type="importmap">
 {
   "imports": {
-    "react/": "https://esm.sh/react@^19.2.4/",
     "react": "https://esm.sh/react@^19.2.4",
     "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react/": "https://esm.sh/react@^19.2.4/",
     "lucide-react": "https://esm.sh/lucide-react@^0.563.0"
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
 </head>
-  <body class="bg-slate-900 text-white h-screen overflow-hidden">
-    <div id="root" class="h-full"></div>
-  <script type="module" src="/index.tsx"></script>
+<body>
+  <div id="root" class="h-full"></div>
+
+  <!-- Main Application Logic -->
+  <script type="text/babel">
+    const { useState, useEffect, useCallback, useMemo } = React;
+
+    // --- Icons (Inline SVGs to remove external dependencies) ---
+    const Icon = ({ path, size = 24, className = "" }) => (
+      <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        width={size} 
+        height={size} 
+        viewBox="0 0 24 24" 
+        fill="none" 
+        stroke="currentColor" 
+        strokeWidth="2" 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+        className={className}
+      >
+        {path}
+      </svg>
+    );
+
+    const Icons = {
+      Settings: (props) => <Icon {...props} path={<><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></>} />,
+      Undo2: (props) => <Icon {...props} path={<><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11"/></>} />,
+      History: (props) => <Icon {...props} path={<><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 12"/><path d="M3 3v9h9"/><path d="M12 7v5l4 2"/></>} />,
+      Trophy: (props) => <Icon {...props} path={<><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></>} />,
+      Users: (props) => <Icon {...props} path={<><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></>} />,
+      Check: (props) => <Icon {...props} path={<path d="M20 6 9 17l-5-5"/>} />,
+      X: (props) => <Icon {...props} path={<><path d="M18 6 6 18"/><path d="m6 6 12 12"/></>} />,
+      Trash2: (props) => <Icon {...props} path={<><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></>} />,
+      ChevronDown: (props) => <Icon {...props} path={<path d="m6 9 6 6 6-6"/>} />,
+      ChevronUp: (props) => <Icon {...props} path={<path d="m18 15-6-6-6 6"/>} />,
+      Calendar: (props) => <Icon {...props} path={<><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></>} />,
+      Play: (props) => <Icon {...props} path={<polygon points="5 3 19 12 5 21 5 3"/>} />,
+      Pause: (props) => <Icon {...props} path={<><rect width="4" height="16" x="6" y="4"/><rect width="4" height="16" x="14" y="4"/></>} />,
+      RefreshCw: (props) => <Icon {...props} path={<><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></>} />,
+    };
+
+    // --- Types & Constants ---
+    const Team = {
+      Left: 'left',
+      Right: 'right',
+    };
+
+    const INITIAL_STATE = {
+      scores: {
+        [Team.Left]: 0,
+        [Team.Right]: 0,
+      },
+      servingTeam: Team.Left, 
+      serverNumber: 2, 
+      gameStatus: 'idle',
+      winner: null,
+      history: [],
+      matchSettings: {
+        winningScore: 11,
+        winByTwo: true,
+        teamNames: {
+          [Team.Left]: "我方",
+          [Team.Right]: "對手"
+        }
+      },
+    };
+
+    // --- Logic ---
+    const checkWinCondition = (state) => {
+      const { scores, matchSettings } = state;
+      const left = scores[Team.Left];
+      const right = scores[Team.Right];
+      const target = matchSettings.winningScore;
+
+      if (left >= target && (!matchSettings.winByTwo || left >= right + 2)) {
+        return Team.Left;
+      }
+      if (right >= target && (!matchSettings.winByTwo || right >= left + 2)) {
+        return Team.Right;
+      }
+      return null;
+    };
+
+    const createSnapshot = (state) => ({
+      scores: { ...state.scores },
+      servingTeam: state.servingTeam,
+      serverNumber: state.serverNumber,
+      timestamp: Date.now(),
+    });
+
+    // --- Components ---
+
+    const Button = ({ children, variant = 'neutral', fullHeight = false, className = '', disabled, ...props }) => {
+      const baseStyle = "font-bold rounded-2xl transition-all active:scale-95 disabled:opacity-30 disabled:active:scale-100 shadow-lg flex items-center justify-center";
+      const variants = {
+        primary: "bg-emerald-500 hover:bg-emerald-400 text-white shadow-emerald-900/50",
+        danger: "bg-rose-500 hover:bg-rose-400 text-white shadow-rose-900/50",
+        neutral: "bg-slate-700 hover:bg-slate-600 text-white shadow-slate-900/50",
+        ghost: "bg-transparent hover:bg-white/10 text-slate-300 shadow-none",
+      };
+      return (
+        <button className={`${baseStyle} ${variants[variant]} ${fullHeight ? 'h-full' : 'py-4 px-6'} ${className}`} disabled={disabled} {...props}>
+          {children}
+        </button>
+      );
+    };
+
+    const Timer = ({ isRunning, onReset, onToggle }) => {
+      const [seconds, setSeconds] = useState(0);
+
+      useEffect(() => {
+        let interval;
+        if (isRunning) {
+          interval = setInterval(() => setSeconds(s => s + 1), 1000);
+        }
+        return () => clearInterval(interval);
+      }, [isRunning]);
+
+      const formatTime = (totalSeconds) => {
+        const mins = Math.floor(totalSeconds / 60);
+        const secs = totalSeconds % 60;
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      };
+
+      const handleReset = () => {
+        setSeconds(0);
+        onReset();
+      };
+
+      return (
+        <div className="flex items-center gap-3 bg-slate-800 rounded-full px-4 py-2 border border-slate-700">
+          <div className="font-mono text-xl text-emerald-400 w-16 text-center">{formatTime(seconds)}</div>
+          <button onClick={onToggle} className="p-1 hover:text-emerald-400 transition-colors">
+            {isRunning ? <Icons.Pause size={18} /> : <Icons.Play size={18} />}
+          </button>
+          <button onClick={handleReset} className="p-1 hover:text-rose-400 transition-colors">
+            <Icons.RefreshCw size={18} />
+          </button>
+        </div>
+      );
+    };
+
+    const ScoreCard = ({ teamName, score, isServing, serverNumber, isWinner, onClick, disabled }) => {
+      return (
+        <button
+          onClick={onClick}
+          disabled={disabled}
+          className={`
+            relative flex flex-col items-center justify-center w-full h-full rounded-3xl p-4 transition-all duration-300
+            ${isWinner ? 'bg-amber-500 text-slate-900 border-4 border-yellow-300' : ''}
+            ${!isWinner && isServing ? 'bg-slate-700 border-4 border-emerald-500 shadow-lg shadow-emerald-900/30' : ''}
+            ${!isWinner && !isServing ? 'bg-slate-800 border-2 border-slate-700 opacity-80' : ''}
+          `}
+        >
+          {isServing && !isWinner && (
+            <div className="absolute top-4 right-4 bg-emerald-500 text-slate-900 font-bold px-3 py-1 rounded-full text-xs sm:text-sm shadow-md animate-pulse">
+              發球 #{serverNumber}
+            </div>
+          )}
+          <div className="text-slate-400 text-sm sm:text-lg font-medium tracking-wide uppercase mb-2">
+            {teamName}
+          </div>
+          <div className={`font-mono font-bold leading-none ${isWinner ? 'text-slate-900' : 'text-white'} text-[6rem] sm:text-[8rem] md:text-[10rem]`}>
+            {score}
+          </div>
+          {!disabled && !isWinner && (
+            <div className="mt-4 px-6 py-2 rounded-full bg-white/10 text-sm font-semibold backdrop-blur-sm">
+              {isServing ? "+ 得分" : "等待發球"}
+            </div>
+          )}
+          {isWinner && (
+             <div className="absolute bottom-8 px-6 py-2 rounded-full bg-black/20 text-xl font-bold backdrop-blur-sm">
+              獲勝 🏆
+            </div>
+          )}
+        </button>
+      );
+    };
+
+    const SettingsModal = ({ isOpen, onClose, winningScore, setWinningScore, teamNames, setTeamName }) => {
+      if (!isOpen) return null;
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-slate-800 w-full max-w-sm rounded-3xl border border-slate-700 shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-slate-700">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <Icons.Trophy className="text-amber-400" size={24} />
+                比賽設定
+              </h2>
+              <button onClick={onClose} className="p-2 hover:bg-slate-700 rounded-full transition-colors"><Icons.X size={20} /></button>
+            </div>
+            <div className="p-6 space-y-6">
+              <div>
+                <label className="block text-slate-400 text-sm mb-3 font-medium flex items-center gap-2">
+                  <Icons.Users size={16} /> 隊伍名稱
+                </label>
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-xs text-slate-500 block mb-1">左側隊伍</span>
+                    <input type="text" value={teamNames[Team.Left]} onChange={(e) => setTeamName(Team.Left, e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-emerald-500 transition-colors" />
+                  </div>
+                  <div>
+                    <span className="text-xs text-slate-500 block mb-1">右側隊伍</span>
+                    <input type="text" value={teamNames[Team.Right]} onChange={(e) => setTeamName(Team.Right, e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-emerald-500 transition-colors" />
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label className="block text-slate-400 text-sm mb-4 font-medium">獲勝分數</label>
+                <div className="grid grid-cols-3 gap-3">
+                  {[5, 7, 11].map((score) => (
+                    <button key={score} onClick={() => setWinningScore(score)}
+                      className={`py-3 px-4 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-2 ${winningScore === score ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-900/50' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
+                      {score} {winningScore === score && <Icons.Check size={16} />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="p-4 bg-slate-900/50 rounded-xl text-xs text-slate-400 leading-relaxed">
+                註：標準匹克球比賽通常為 11 分制，且必須領先 2 分才能獲勝。
+              </div>
+            </div>
+            <div className="p-4 border-t border-slate-700">
+              <button onClick={onClose} className="w-full py-4 bg-white text-slate-900 font-bold rounded-xl hover:bg-slate-200 transition-colors">完成設定</button>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    const MatchHistory = ({ isOpen, onClose, records, onClearHistory }) => {
+      const [expandedId, setExpandedId] = useState(null);
+      if (!isOpen) return null;
+      
+      const toggleExpand = (id) => setExpandedId(expandedId === id ? null : id);
+      const formatDate = (ts) => new Date(ts).toLocaleString('zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-slate-800 w-full max-w-sm h-[80vh] rounded-3xl border border-slate-700 shadow-2xl overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-slate-700 flex-shrink-0">
+              <h2 className="text-xl font-bold flex items-center gap-2"><Icons.History className="text-blue-400" size={24} /> 歷史紀錄</h2>
+              <div className="flex gap-2">
+                {records.length > 0 && (
+                  <button onClick={() => { if(window.confirm('確定要清除所有紀錄嗎？')) onClearHistory(); }} className="p-2 text-rose-400 hover:bg-rose-900/30 rounded-full transition-colors"><Icons.Trash2 size={20} /></button>
+                )}
+                <button onClick={onClose} className="p-2 hover:bg-slate-700 rounded-full transition-colors"><Icons.X size={20} /></button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {records.length === 0 ? (
+                 <div className="flex flex-col items-center justify-center h-full text-slate-500 gap-4"><Icons.History size={48} className="opacity-20" /><p>尚無比賽紀錄</p></div>
+              ) : (
+                 records.map((match) => {
+                   const isExpanded = expandedId === match.id;
+                   const leftName = match.teamNames[Team.Left];
+                   const rightName = match.teamNames[Team.Right];
+                   const leftScore = match.finalScores[Team.Left];
+                   const rightScore = match.finalScores[Team.Right];
+                   const leftWon = match.winner === Team.Left;
+
+                   return (
+                     <div key={match.id} className="bg-slate-900 border border-slate-700 rounded-2xl overflow-hidden shadow-sm">
+                        <div onClick={() => toggleExpand(match.id)} className="p-4 cursor-pointer hover:bg-slate-800/50 transition-colors">
+                          <div className="flex justify-between items-center mb-3 text-xs text-slate-500 font-medium">
+                            <span className="flex items-center gap-1"><Icons.Calendar size={12}/> {formatDate(match.timestamp)}</span>
+                            {isExpanded ? <Icons.ChevronUp size={16}/> : <Icons.ChevronDown size={16}/>}
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <div className={`flex flex-col items-start ${leftWon ? 'opacity-100' : 'opacity-60'}`}>
+                              <span className="text-sm font-bold text-white mb-1">{leftName}</span>
+                              <span className={`text-2xl font-mono font-bold ${leftWon ? 'text-emerald-400' : 'text-slate-400'}`}>{leftScore}</span>
+                            </div>
+                            <div className="h-8 w-px bg-slate-700 mx-4"></div>
+                            <div className={`flex flex-col items-end ${!leftWon ? 'opacity-100' : 'opacity-60'}`}>
+                              <span className="text-sm font-bold text-white mb-1">{rightName}</span>
+                              <span className={`text-2xl font-mono font-bold ${!leftWon ? 'text-emerald-400' : 'text-slate-400'}`}>{rightScore}</span>
+                            </div>
+                          </div>
+                        </div>
+                        {isExpanded && (
+                          <div className="border-t border-slate-800 bg-slate-950/30 p-3 space-y-1 max-h-48 overflow-y-auto">
+                            <div className="text-xs text-slate-500 font-medium mb-2 px-1">得分過程</div>
+                            {match.timeline.map((snap, idx) => (
+                              <div key={idx} className="flex justify-between items-center text-xs py-1 px-2 hover:bg-white/5 rounded">
+                                <span className="text-slate-500 font-mono w-6">#{idx + 1}</span>
+                                <div className="flex gap-2 font-mono">
+                                   <span className={snap.servingTeam === Team.Left ? "text-emerald-400 font-bold" : "text-slate-400"}>{snap.scores[Team.Left]}</span>
+                                   <span className="text-slate-600">-</span>
+                                   <span className={snap.servingTeam === Team.Right ? "text-emerald-400 font-bold" : "text-slate-400"}>{snap.scores[Team.Right]}</span>
+                                </div>
+                                <span className="text-slate-600 truncate max-w-[80px] text-right">{match.teamNames[snap.servingTeam]}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                     </div>
+                   );
+                 })
+              )}
+            </div>
+            <div className="p-4 border-t border-slate-700 flex-shrink-0">
+              <button onClick={onClose} className="w-full py-4 bg-slate-700 text-white font-bold rounded-xl hover:bg-slate-600 transition-colors">關閉</button>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    // --- Main App ---
+
+    const App = () => {
+      // Initialize Match Records from LocalStorage
+      const [matchRecords, setMatchRecords] = useState(() => {
+        try {
+          const saved = localStorage.getItem('pickleball_history');
+          return saved ? JSON.parse(saved) : [];
+        } catch (e) { return []; }
+      });
+      
+      const [gameState, setGameState] = useState(INITIAL_STATE);
+      const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+      const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+      const [timerRunning, setTimerRunning] = useState(false);
+
+      useEffect(() => {
+        localStorage.setItem('pickleball_history', JSON.stringify(matchRecords));
+      }, [matchRecords]);
+
+      const saveHistory = useCallback(() => {
+        setGameState(prev => ({
+          ...prev,
+          history: [...prev.history, createSnapshot(prev)].slice(-50)
+        }));
+      }, []);
+
+      const handleUndo = () => {
+        setGameState(prev => {
+          if (prev.history.length === 0) return prev;
+          const lastState = prev.history[prev.history.length - 1];
+          return {
+            ...prev,
+            scores: lastState.scores,
+            servingTeam: lastState.servingTeam,
+            serverNumber: lastState.serverNumber,
+            winner: null,
+            gameStatus: prev.history.length === 1 ? 'idle' : 'playing',
+            history: prev.history.slice(0, -1)
+          };
+        });
+      };
+
+      const handleNewMatch = () => {
+        if (gameState.winner) {
+          const record = {
+            id: Date.now().toString(),
+            timestamp: Date.now(),
+            teamNames: gameState.matchSettings.teamNames,
+            finalScores: gameState.scores,
+            winner: gameState.winner,
+            timeline: gameState.history
+          };
+          setMatchRecords(prev => [record, ...prev]);
+        }
+        setTimerRunning(false);
+        setGameState(prev => ({ ...INITIAL_STATE, matchSettings: prev.matchSettings, gameStatus: 'idle' }));
+      };
+
+      const startGame = () => {
+        if (gameState.winner) handleNewMatch();
+        setGameState(prev => ({ ...prev, gameStatus: 'playing' }));
+        setTimerRunning(true);
+      };
+
+      const handlePoint = () => {
+        if (gameState.winner) return;
+        saveHistory();
+        setGameState(prev => {
+          const newScores = { ...prev.scores };
+          newScores[prev.servingTeam]++;
+          const winner = checkWinCondition({ ...prev, scores: newScores });
+          if (winner) setTimerRunning(false);
+          return { ...prev, scores: newScores, gameStatus: 'playing', winner };
+        });
+      };
+
+      const handleFault = () => {
+        if (gameState.winner) return;
+        saveHistory();
+        setGameState(prev => {
+          let nextServerNumber = prev.serverNumber;
+          let nextServingTeam = prev.servingTeam;
+          if (prev.serverNumber === 1) {
+            nextServerNumber = 2;
+          } else {
+            nextServerNumber = 1;
+            nextServingTeam = prev.servingTeam === Team.Left ? Team.Right : Team.Left;
+          }
+          return { ...prev, servingTeam: nextServingTeam, serverNumber: nextServerNumber, gameStatus: 'playing' };
+        });
+      };
+
+      const handleTeamClick = (team) => {
+        if (gameState.gameStatus === 'idle' || gameState.winner) return;
+        if (team === gameState.servingTeam) {
+          handlePoint();
+        } else {
+          handleFault();
+        }
+      };
+
+      const scoreString = `${gameState.scores[gameState.servingTeam]}-${gameState.scores[gameState.servingTeam === Team.Left ? Team.Right : Team.Left]}-${gameState.serverNumber}`;
+      const teamNames = gameState.matchSettings.teamNames;
+
+      return (
+        <div className="flex flex-col h-full max-w-md mx-auto bg-slate-900 shadow-2xl relative">
+          <header className="flex items-center justify-between p-4 bg-slate-900/80 backdrop-blur-md z-10 gap-2">
+            <button onClick={() => setIsSettingsOpen(true)} className="p-2 text-slate-400 hover:text-white transition-colors"><Icons.Settings size={24} /></button>
+            <button onClick={() => setIsHistoryOpen(true)} className="p-2 text-slate-400 hover:text-white transition-colors"><Icons.History size={24} /></button>
+            <div className="flex-1 flex justify-center">
+              <Timer isRunning={timerRunning} onToggle={() => setTimerRunning(!timerRunning)} onReset={() => setTimerRunning(false)} />
+            </div>
+            <button onClick={handleUndo} disabled={gameState.history.length === 0} className="p-2 text-slate-400 hover:text-white disabled:opacity-30 transition-colors"><Icons.Undo2 size={24} /></button>
+          </header>
+
+          <main className="flex-1 flex flex-col p-4 gap-4 overflow-hidden relative">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
+              <div className="bg-slate-950/90 text-white font-mono font-bold text-xl px-4 py-1 rounded-full border border-slate-700 shadow-2xl backdrop-blur-md whitespace-nowrap">
+                喊分: {scoreString}
+              </div>
+            </div>
+            <div className="flex-1 min-h-0">
+              <ScoreCard teamName={teamNames[Team.Left]} score={gameState.scores[Team.Left]} isServing={gameState.servingTeam === Team.Left} serverNumber={gameState.serverNumber} isWinner={gameState.winner === Team.Left} onClick={() => handleTeamClick(Team.Left)} disabled={gameState.gameStatus === 'idle'} />
+            </div>
+            <div className="flex-1 min-h-0">
+              <ScoreCard teamName={teamNames[Team.Right]} score={gameState.scores[Team.Right]} isServing={gameState.servingTeam === Team.Right} serverNumber={gameState.serverNumber} isWinner={gameState.winner === Team.Right} onClick={() => handleTeamClick(Team.Right)} disabled={gameState.gameStatus === 'idle'} />
+            </div>
+          </main>
+
+          <footer className="p-4 bg-slate-900 safe-area-bottom pb-8">
+            {gameState.gameStatus === 'idle' ? (
+              <Button variant="primary" onClick={startGame} className="w-full py-6 text-xl uppercase tracking-widest">開始比賽</Button>
+            ) : gameState.winner ? (
+              <div className="grid grid-cols-1">
+                 <Button variant="neutral" onClick={handleNewMatch} className="w-full py-6 text-xl">新比賽 (New Match)</Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-3">
+                 <Button variant="danger" onClick={handleFault} className="py-6 text-xl uppercase tracking-wider">發球失誤 / 換邊</Button>
+                <div className="text-center text-xs text-slate-500 mt-2">點擊發球方比分以增加分數。失誤請點擊下方按鈕。</div>
+              </div>
+            )}
+          </footer>
+
+          <SettingsModal 
+            isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)}
+            winningScore={gameState.matchSettings.winningScore}
+            setWinningScore={(s) => setGameState(prev => ({ ...prev, matchSettings: { ...prev.matchSettings, winningScore: s } }))}
+            teamNames={teamNames}
+            setTeamName={(team, name) => setGameState(prev => ({ ...prev, matchSettings: { ...prev.matchSettings, teamNames: { ...prev.matchSettings.teamNames, [team]: name } } }))}
+          />
+          <MatchHistory isOpen={isHistoryOpen} onClose={() => setIsHistoryOpen(false)} records={matchRecords} onClearHistory={() => setMatchRecords([])} />
+        </div>
+      );
+    };
+
+    // --- Mount ---
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
 </body>
 </html>
