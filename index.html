@@ -45,10 +45,10 @@
 <script type="importmap">
 {
   "imports": {
-    "react": "https://esm.sh/react@^19.2.4",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
     "react/": "https://esm.sh/react@^19.2.4/",
-    "lucide-react": "https://esm.sh/lucide-react@^0.563.0"
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/"
   }
 }
 </script>
@@ -81,7 +81,8 @@
     const Icons = {
       Settings: (props) => <Icon {...props} path={<><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></>} />,
       Undo2: (props) => <Icon {...props} path={<><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11"/></>} />,
-      History: (props) => <Icon {...props} path={<><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 12"/><path d="M3 3v9h9"/><path d="M12 7v5l4 2"/></>} />,
+      // Updated History icon to ClipboardList style for clarity
+      History: (props) => <Icon {...props} path={<><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></>} />,
       Trophy: (props) => <Icon {...props} path={<><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></>} />,
       Users: (props) => <Icon {...props} path={<><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></>} />,
       Check: (props) => <Icon {...props} path={<path d="M20 6 9 17l-5-5"/>} />,
@@ -93,6 +94,7 @@
       Play: (props) => <Icon {...props} path={<polygon points="5 3 19 12 5 21 5 3"/>} />,
       Pause: (props) => <Icon {...props} path={<><rect width="4" height="16" x="6" y="4"/><rect width="4" height="16" x="14" y="4"/></>} />,
       RefreshCw: (props) => <Icon {...props} path={<><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></>} />,
+      Scale: (props) => <Icon {...props} path={<><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></>} />,
     };
 
     // --- Types & Constants ---
@@ -234,7 +236,7 @@
       );
     };
 
-    const SettingsModal = ({ isOpen, onClose, winningScore, setWinningScore, teamNames, setTeamName }) => {
+    const SettingsModal = ({ isOpen, onClose, winningScore, setWinningScore, teamNames, setTeamName, winByTwo, setWinByTwo }) => {
       if (!isOpen) return null;
       return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
@@ -247,6 +249,8 @@
               <button onClick={onClose} className="p-2 hover:bg-slate-700 rounded-full transition-colors"><Icons.X size={20} /></button>
             </div>
             <div className="p-4 sm:p-6 space-y-6">
+              
+              {/* Team Names */}
               <div>
                 <label className="block text-slate-400 text-sm mb-3 font-medium flex items-center gap-2">
                   <Icons.Users size={16} /> 隊伍名稱
@@ -264,6 +268,8 @@
                   </div>
                 </div>
               </div>
+
+              {/* Win Score */}
               <div>
                 <label className="block text-slate-400 text-sm mb-4 font-medium">獲勝分數</label>
                 <div className="grid grid-cols-3 gap-3">
@@ -275,6 +281,23 @@
                   ))}
                 </div>
               </div>
+
+              {/* Win By Two Toggle */}
+              <div>
+                 <label className="block text-slate-400 text-sm mb-3 font-medium flex items-center gap-2">
+                   <Icons.Scale size={16} /> 獲勝規則
+                 </label>
+                 <div 
+                   onClick={() => setWinByTwo(!winByTwo)}
+                   className="bg-slate-900 rounded-xl p-4 flex items-center justify-between border border-slate-600 cursor-pointer active:bg-slate-800 transition-colors"
+                 >
+                   <span className="text-white font-medium text-sm">必須領先 2 分獲勝</span>
+                   <div className={`w-12 h-6 rounded-full transition-colors relative ${winByTwo ? 'bg-emerald-500' : 'bg-slate-600'}`}>
+                     <div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform shadow-sm ${winByTwo ? 'translate-x-6' : 'translate-x-0'}`} />
+                   </div>
+                 </div>
+              </div>
+
               <div className="p-4 bg-slate-900/50 rounded-xl text-xs text-slate-400 leading-relaxed">
                 註：標準匹克球比賽通常為 11 分制，且必須領先 2 分才能獲勝。
               </div>
@@ -517,6 +540,8 @@
             setWinningScore={(s) => setGameState(prev => ({ ...prev, matchSettings: { ...prev.matchSettings, winningScore: s } }))}
             teamNames={teamNames}
             setTeamName={(team, name) => setGameState(prev => ({ ...prev, matchSettings: { ...prev.matchSettings, teamNames: { ...prev.matchSettings.teamNames, [team]: name } } }))}
+            winByTwo={gameState.matchSettings.winByTwo}
+            setWinByTwo={(w) => setGameState(prev => ({ ...prev, matchSettings: { ...prev.matchSettings, winByTwo: w } }))}
           />
           <MatchHistory isOpen={isHistoryOpen} onClose={() => setIsHistoryOpen(false)} records={matchRecords} onClearHistory={() => setMatchRecords([])} />
         </div>
